@@ -45,30 +45,3 @@ start:
 code ends
 
 end start
-
-
-
-; mov ax,a
-; mov es,ax
-; mov ax,c
-; mov ds,ax
-
-; mov bx,0
-; mov cx,8
-
-; s1:mov ax,es:[bx]
-; add [bx],ax
-; add bx,2
-; loop s1
-
-; mov ax,b
-; mov es,ax
-; mov ds,ax
-
-; mov bx,0
-; mov cx,8
-
-; s2:mov ax,es:[bx]
-; add [bx],ax
-; add bx,2
-; loop s2
