@@ -31,36 +31,49 @@ start:
     mov ax, 4c00h
     int 21h
 
+
 dtoc:
-    mov cx, 0
+    push ax
+    push bx
     push cx
+    push dx
 
-    loop0:
-        ; dx:ax/cx = ax(%dx)
-        mov dx, 0
-        mov cx, 10
-        div cx
+    mov bx, 0
+div_push:
+    ; dx:ax/cx = ax(%dx)
+    mov dx, 0
+    mov cx, 10
+    div cx
 
-        push dx
+    push dx
+    inc bx
 
-        mov cx, ax
-        jcxz loop1
+    mov cx, ax
+    jcxz toc
 
-        jmp short loop0
+    jmp short div_push
 
-    loop1:
-        pop cx
-        jcxz ok
+toc:
+    mov cx, bx
+pop_loop:
+    pop ax
+    add al, 30h
+    mov ds:[si], al
+    inc si
+    loop pop_loop
+dtoc_ret:
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    ret
 
-        add cl, 30h
-        mov ds:[si], cl
-        inc si
-        jmp short loop1
-
-    ok:
-        ret
 
 show_str:
+    push dx
+    push cx
+    push si
+
     ; row position
     mov al, dh
     mov bl, 160
@@ -78,24 +91,26 @@ show_str:
     mul bl
     add di, ax
 
-    ; write word
-    mov al, ds:[si]
-    mov byte ptr es:[di], al
-    ; write color
-    mov byte ptr es:[di+1], cl
-
-    ; jmp or ret
-    push cx
-    mov cl, al
+    mov al, cl
     mov ch, 0
-    jcxz ok2
-    inc si
-    pop cx
-    jmp short show_str
+show:
+    ; read word
+    mov cl, ds:[si]
+    ; return if read 0
+    jcxz ok
+    ; write word
+    mov byte ptr es:[di], cl
+    ; write color
+    mov byte ptr es:[di+1], al
 
-    ok2:
-        pop cx
-        ret
+    inc si
+    add di, 2
+    jmp short show
+ok:
+    pop si
+    pop cx
+    pop dx
+    ret
 
 codesg ends
 
