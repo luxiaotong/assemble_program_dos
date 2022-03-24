@@ -30,6 +30,10 @@ start:
     int 21h
 
 show_str:
+    push dx
+    push cx
+    push si
+
     ; row position
     mov al, dh
     mov bl, 160
@@ -47,23 +51,25 @@ show_str:
     mul bl
     add di, ax
 
-    ; write word
-    mov al, ds:[si]
-    mov byte ptr es:[di], al
-    ; write color
-    mov byte ptr es:[di+1], cl
-
-    ; jmp or ret
-    push cx
-    mov cl, al
+    mov al, cl
     mov ch, 0
+show:
+    ; read word
+    mov cl, ds:[si]
+    ; return if read 0
     jcxz ok
-    inc si
-    pop cx
-    jmp short show_str
+    ; write word
+    mov byte ptr es:[di], cl
+    ; write color
+    mov byte ptr es:[di+1], al
 
+    inc si
+    add di, 2
+    jmp short show
 ok:
+    pop si
     pop cx
+    pop dx
     ret
 
 codesg ends
