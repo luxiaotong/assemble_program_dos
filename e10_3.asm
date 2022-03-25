@@ -19,8 +19,12 @@ start:
     mov ax, 0b800h
     mov es, ax
     
-    mov ax, 12666
-    call dtoc
+    ; mov ax, 12666
+    ; call dtoc
+
+    mov ax, 42cah
+    mov dx, 000ch
+    call ddtoc
 
     mov dh, 8
     mov dl, 3
@@ -37,9 +41,10 @@ dtoc:
     push bx
     push cx
     push dx
+    push si
 
     mov bx, 0
-div_push:
+dtoc_div:
     ; dx:ax/cx = ax(%dx)
     mov dx, 0
     mov cx, 10
@@ -49,19 +54,20 @@ div_push:
     inc bx
 
     mov cx, ax
-    jcxz toc
+    jcxz dtoc_change
 
-    jmp short div_push
+    jmp short dtoc_div
 
-toc:
+dtoc_change:
     mov cx, bx
-pop_loop:
+dtoc_write:
     pop ax
     add al, 30h
     mov ds:[si], al
     inc si
-    loop pop_loop
+    loop dtoc_write
 dtoc_ret:
+    pop si
     pop dx
     pop cx
     pop bx
@@ -110,6 +116,70 @@ ok:
     pop si
     pop cx
     pop dx
+    ret
+
+; 输入: ; 低位被除数: ax, 高位被除数: dx, 字符串在ds起始位置: si
+ddtoc:
+    push ax
+    push bx
+    push cx
+    push dx
+    push si
+
+    mov bx, 0
+ddtoc_div:
+    ; dx:ax/cx = ax(%dx)
+    mov cx, 10
+    call divdw
+
+    push cx
+    inc bx
+
+    mov cx, ax
+    add cx, dx
+    jcxz ddtoc_change
+
+    jmp short ddtoc_div
+
+ddtoc_change:
+    mov cx, bx
+ddtoc_write:
+    pop ax
+    add al, 30h
+    mov ds:[si], al
+    inc si
+    loop ddtoc_write
+    mov byte ptr ds:[si], 0
+ddtoc_ret:
+    pop si
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    ret
+
+
+; 输入: 低位被除数: ax, 高位被除数: dx 除数: cx
+; 输出: 低位结果: ax, 高位结果: dx, 余数 cx
+divdw:
+    push bx
+    
+    push ax; L
+
+    mov ax, dx ; dx=H
+    mov dx, 0
+    div cx ; cx=N
+    ;div 结果: ax=int(H/N), dx=rem(H/N)
+    
+    mov bx, ax
+    
+    pop ax; ax=L
+    div cx
+
+    mov cx, dx
+    mov dx, bx
+
+    pop bx    
     ret
 
 codesg ends
